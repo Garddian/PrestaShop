@@ -767,7 +767,9 @@ class ProductCore extends ObjectModel
     public function getFieldsShop()
     {
         $fields = parent::getFieldsShop();
-        $fields['unity'] = pSQL($this->unity);
+        if (null === $this->update_fields || !empty($this->update_fields['unity'])) {
+            $fields['unity'] = pSQL($this->unity);
+        }
 
         return $fields;
     }
@@ -3116,7 +3118,7 @@ class ProductCore extends ObjectModel
 
         if ($order_by === 'price') {
             Tools::orderbyPrice($result, $order_way);
-            $result = array_slice($result, (int) (($nb_products - 1) * $page_number), (int) $page_number);
+            $result = array_slice($result, (int) (($page_number - 1) * $nb_products), (int) $nb_products);
         }
         $products_ids = [];
         foreach ($result as $row) {

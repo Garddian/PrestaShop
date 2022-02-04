@@ -80,7 +80,6 @@ services:
     arguments:
       - '@prestashop.adapter.legacy.configuration'
       - '@=service("prestashop.adapter.legacy.context").getContext().cookie'
-      - '@=service("prestashop.adapter.environment").isDebug()'
 
   prestashop.adapter.maintenance.configuration:
     class: 'PrestaShop\PrestaShop\Adapter\Shop\MaintenanceConfiguration'
@@ -193,11 +192,16 @@ services:
     class: 'PrestaShop\PrestaShop\Adapter\Carrier\HandlingConfiguration'
     arguments:
       - '@prestashop.adapter.legacy.configuration'
+      - '@prestashop.adapter.shop.context'
+      - '@prestashop.adapter.multistore_feature'
+
 
   prestashop.adapter.shipping_preferences.carrier_options_configuration:
     class: 'PrestaShop\PrestaShop\Adapter\Carrier\CarrierOptionsConfiguration'
     arguments:
       - '@prestashop.adapter.legacy.configuration'
+      - '@prestashop.adapter.shop.context'
+      - '@prestashop.adapter.multistore_feature'
 
   prestashop.core.email.email_configurator:
     class: 'PrestaShop\PrestaShop\Core\Email\EmailDataConfigurator'
@@ -213,6 +217,8 @@ services:
     class: 'PrestaShop\PrestaShop\Adapter\Webservice\WebserviceConfiguration'
     arguments:
       - '@prestashop.adapter.legacy.configuration'
+      - '@prestashop.adapter.shop.context'
+      - '@prestashop.adapter.multistore_feature'
 
   prestashop.adapter.meta.set_up_urls.configuration:
     class: 'PrestaShop\PrestaShop\Adapter\Meta\SetUpUrlsDataConfiguration'

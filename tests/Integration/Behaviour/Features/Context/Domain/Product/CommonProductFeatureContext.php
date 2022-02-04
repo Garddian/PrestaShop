@@ -28,7 +28,6 @@ declare(strict_types=1);
 
 namespace Tests\Integration\Behaviour\Features\Context\Domain\Product;
 
-use Behat\Gherkin\Node\TableNode;
 use Language;
 use PHPUnit\Framework\Assert;
 use PrestaShop\PrestaShop\Core\Domain\Product\Exception\ProductConstraintException;
@@ -38,8 +37,6 @@ use PrestaShopBundle\Install\DatabaseDump;
 use Product;
 use RuntimeException;
 use Tests\Integration\Behaviour\Features\Context\LanguageFeatureContext;
-use Tests\Integration\Behaviour\Features\Context\Util\CombinationDetails;
-use Tests\Integration\Behaviour\Features\Context\Util\ProductCombinationFactory;
 use Tests\Integration\Behaviour\Features\Transform\LocalizedArrayTransformContext;
 
 class CommonProductFeatureContext extends AbstractProductFeatureContext
@@ -116,40 +113,6 @@ class CommonProductFeatureContext extends AbstractProductFeatureContext
     }
 
     /**
-     * @Given product :productReference has following combinations:
-     *
-     * @param string $productReference
-     * @param TableNode $tableNode
-     */
-    public function addCombinationsToProduct(string $productReference, TableNode $tableNode): void
-    {
-        $details = $tableNode->getColumnsHash();
-        $combinationsDetails = [];
-
-        foreach ($details as $combination) {
-            $combinationsDetails[] = new CombinationDetails(
-                $combination['reference'],
-                (int) $combination['quantity'],
-                explode(';', $combination['attributes'])
-            );
-        }
-
-        $combinations = ProductCombinationFactory::makeCombinations(
-            $this->getSharedStorage()->get($productReference),
-            $combinationsDetails
-        );
-
-        foreach ($combinations as $combination) {
-            $this->getSharedStorage()->set($combination->reference, (int) $combination->id);
-        }
-
-        // Product class has a lot of cache that is set as soon as the product is created, including for prices
-        // which are cached for each combinations. Since it was cached when the combinations did not exist we need
-        // to clear it so that the newly created combinations' prices are correctly computed next time they are needed.
-        Product::resetStaticCache();
-    }
-
-    /**
      * @Then /^product "(.+)" localized "(.+)" should be:$/
      * @Given /^product "(.+)" localized "(.+)" is:$/
      *
@@ -212,12 +175,14 @@ class CommonProductFeatureContext extends AbstractProductFeatureContext
      */
     public function assertProductDoesNotExistAnymore(string $reference): void
     {
+        $caughtException = null;
         try {
             $this->getProductForEditing($reference);
             throw new RuntimeException(sprintf('Product "%s" was not expected to exist, but it was found', $reference));
         } catch (ProductNotFoundException $e) {
-            // intentional. Means product is not found and test should pass
+            $caughtException = $e;
         }
+        Assert::assertNotNull($caughtException);
     }
 
     /**
